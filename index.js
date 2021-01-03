@@ -2,8 +2,8 @@ const w = 500
 const h = 500
 const fontSize = 40
 const textColor = "white"
-const backColor = "black"
-const delay = 20 
+const backColor = "#bdbdbd"
+const delay = 100 
 const scGap = 0.02 
 const text = "2020"
 const newText = "1"
@@ -34,32 +34,40 @@ class ScaleUtil {
     }
 
     static divideScale(scale, i, n) {
-        return Math.min(1 / n, ScaleUtil.divideScale(scale, i, n)) * n 
+        return Math.min(1 / n, ScaleUtil.maxScale(scale, i, n)) * n 
+    }
+
+    static sinify(scale) {
+        return Math.sin(scale * Math.PI)
     }
 }
 
 class DrawingUtil {
 
     static drawRotatingText(context, scale) {
-        const sf = ScaleUtil.sinify(scale)
-        const sfNext = DrawingUtil.divideScale(sf, 1, 2)
-        const gap = h / (2 * text.length)
-        context.font = `${fontSize}px sans-serif`
+        
+        const sf = 0.01 + ScaleUtil.sinify(scale)
+        const sfNext = ScaleUtil.divideScale(sf, 1, 2)
+        const gap = h / (text.length + 2)
+        context.font = context.font.replace(/\d+/g, fontSize)
+        const sfi = ScaleUtil.divideScale(sf, 0, 2)
         context.fillStyle = textColor 
         for (var j = 0; j < text.length; j++) {
-            const tw = context.measureText(text[i]).width
-            const tw1 = context.measureText(newText).width
-            const sfi = ScaleUtil.divideScale(sf, 0, 2)
+            const tw = context.measureText(text[j]).width
             context.save()
-            context.translate(w / 2, gap * (i + 1))
+            context.translate(w / 2, gap * (j + 1))
+
             context.rotate(2 * Math.PI * sfi)
             context.scale(sfi, sfi)
             if (j == text.length - 1) {
-                context.fillText(text[i], -tw / 2 + (w * 0.5 + tw) * sfNext, 0)
-                context.fillText(newText, -tw1 / 2 - (w * 0.5 + tw) * (1 - sfNext), 0)
+                context.fillText(text[j], -tw / 2 + (w * 0.5 + tw) * sfNext, 0)
+            } else {
+                context.fillText(text[j], -tw / 2, 0)
             }
             context.restore()
         }
+        const tw1 = context.measureText(newText).width
+        context.fillText(newText, w / 2 - tw1 / 2 - (w * 0.5 + 2 * tw1) * (1 - sfNext), gap * (text.length))
     }
 
     static drawBackground(context) {
@@ -131,11 +139,16 @@ class Renderer {
         this.loop.start(() => {
             this.node.draw(this.context, (context) => {
                 this.encoder.addFrame(context)
+                console.log("adding frawe")
             })
             this.node.update(() => {
                 this.loop.stop()
-                this.encoder.finish()
+                this.encoder.end()
+                console.log("stopping")
             })
         })
     }
 }
+
+const renderer = new Renderer()
+renderer.start('test.gif')
