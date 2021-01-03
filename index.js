@@ -10,6 +10,7 @@ const newText = "1"
 
 const {Canvas} = require('canvas')
 const GifEncoder = require('gifencoder')
+const {createWriteStream} = require('fs')
 
 class State {
 
@@ -102,5 +103,39 @@ class Loop {
             this.animated = false 
             clearInterval(this.interval)
         }
+    }
+}
+
+class Renderer {
+
+    constructor() {
+        this.encoder = new GifEncoder(w, h)
+        this.canvas = new Canvas()
+        this.loop = new Loop()
+        this.node = new NewYearNode()
+        this.init()
+    }
+
+    init() {
+        this.encoder.setQuality(200)
+        this.encoder.setDelay(delay)
+        this.encoder.setRepeat(0)
+        this.canvas.width = w 
+        this.canvas.height = h 
+        this.context = this.canvas.getContext('2d')
+    }
+
+    start(fileName) {
+        this.encoder.createReadStream().pipe(createWriteStream(fileName))
+        this.encoder.start()
+        this.loop.start(() => {
+            this.node.draw(this.context, (context) => {
+                this.encoder.addFrame(context)
+            })
+            this.node.update(() => {
+                this.loop.stop()
+                this.encoder.finish()
+            })
+        })
     }
 }
