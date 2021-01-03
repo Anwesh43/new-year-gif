@@ -22,3 +22,14 @@ class State {
         }
     }
 }
+
+class ScaleUtil {
+
+    static maxScale(scale, i, n) {
+        return Math.max(0, scale - i / n)
+    }
+
+    static divideScale(scale, i, n) {
+        return Math.min(1 / n, ScaleUtil.divideScale(scale, i, n)) * n 
+    }
+}
